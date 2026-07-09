@@ -3,7 +3,9 @@ import { TopBar } from '../../components/TopBar'
 import { ScoreBar } from '../../components/ScoreBar'
 import { Timer, TimerBar } from '../../components/Timer'
 import { ResultsScreen } from '../../components/ResultsScreen'
+import { InstructionsModal } from '../../components/InstructionsModal'
 import { useCountdown } from '../../lib/useCountdown'
+import { useInstructionsModal } from '../../lib/useInstructionsModal'
 import { addSessionRecord } from '../../lib/storage'
 import { uid } from '../../lib/random'
 import { generateOptiverQuestion, type McqQuestion } from './generate'
@@ -14,6 +16,7 @@ const CORRECT_POINTS = 1
 const WRONG_POINTS = -2
 
 export function OptiverPlay() {
+  const instructions = useInstructionsModal('optiver80')
   const [index, setIndex] = useState(0)
   const [question, setQuestion] = useState<McqQuestion>(() => generateOptiverQuestion())
   const [correct, setCorrect] = useState(0)
@@ -96,7 +99,8 @@ export function OptiverPlay() {
     const total = correct + wrong
     return (
       <>
-        <TopBar title="80 in 8" />
+        <TopBar title="80 in 8" onHelp={instructions.show} />
+        {instructions.open && <InstructionsModal mode="optiver80" onClose={instructions.close} />}
         <ResultsScreen
           title="80 in 8 Complete"
           stats={[
@@ -113,7 +117,12 @@ export function OptiverPlay() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <TopBar title="80 in 8" right={<Timer remainingMs={countdown.remainingMs} totalMs={ROUND_SECONDS * 1000} />} />
+      <TopBar
+        title="80 in 8"
+        onHelp={instructions.show}
+        right={<Timer remainingMs={countdown.remainingMs} totalMs={ROUND_SECONDS * 1000} />}
+      />
+      {instructions.open && <InstructionsModal mode="optiver80" onClose={instructions.close} />}
       <TimerBar remainingMs={countdown.remainingMs} totalMs={ROUND_SECONDS * 1000} />
       <ScoreBar
         items={[

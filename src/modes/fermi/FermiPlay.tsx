@@ -3,7 +3,9 @@ import { TopBar } from '../../components/TopBar'
 import { ScoreBar } from '../../components/ScoreBar'
 import { Timer, TimerBar } from '../../components/Timer'
 import { ResultsScreen } from '../../components/ResultsScreen'
+import { InstructionsModal } from '../../components/InstructionsModal'
 import { useCountdown } from '../../lib/useCountdown'
+import { useInstructionsModal } from '../../lib/useInstructionsModal'
 import { addSessionRecord, getSettings } from '../../lib/storage'
 import { uid, shuffle } from '../../lib/random'
 import { FERMI_QUESTIONS, type FermiQuestion } from './questions'
@@ -20,6 +22,7 @@ interface Bound {
 const EMPTY_BOUND: Bound = { mantissa: '', exponent: 0 }
 
 export function FermiPlay() {
+  const instructions = useInstructionsModal('fermi')
   const settings = getSettings()
   const { secondsPerQuestion, questionsPerSession } = settings.fermi
 
@@ -130,7 +133,8 @@ export function FermiPlay() {
   if (finished) {
     return (
       <>
-        <TopBar title="Fermi Estimation" />
+        <TopBar title="Fermi Estimation" onHelp={instructions.show} />
+        {instructions.open && <InstructionsModal mode="fermi" onClose={instructions.close} />}
         <ResultsScreen
           title="Estimation Session Complete"
           stats={[
@@ -149,8 +153,10 @@ export function FermiPlay() {
     <div className="flex-1 flex flex-col">
       <TopBar
         title="Fermi Estimation"
+        onHelp={instructions.show}
         right={<Timer remainingMs={countdown.remainingMs} totalMs={secondsPerQuestion * 1000} />}
       />
+      {instructions.open && <InstructionsModal mode="fermi" onClose={instructions.close} />}
       <TimerBar remainingMs={countdown.remainingMs} totalMs={secondsPerQuestion * 1000} />
       <ScoreBar
         items={[

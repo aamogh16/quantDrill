@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TopBar } from '../../components/TopBar'
 import { ScoreBar } from '../../components/ScoreBar'
 import { ResultsScreen } from '../../components/ResultsScreen'
+import { InstructionsModal } from '../../components/InstructionsModal'
+import { useInstructionsModal } from '../../lib/useInstructionsModal'
 import { addSessionRecord, getSettings } from '../../lib/storage'
 import { uid } from '../../lib/random'
 import { dealEtfRound, gapAt, resolveArb, type ArbAction, type EtfRound } from './roundLogic'
@@ -9,6 +11,7 @@ import { dealEtfRound, gapAt, resolveArb, type ArbAction, type EtfRound } from '
 const ROUNDS_PER_SESSION = 10
 
 export function EtfArbPlay() {
+  const instructions = useInstructionsModal('etfArb')
   const settings = getSettings()
   const { secondsPerRound, legs } = settings.etfArb
 
@@ -99,7 +102,8 @@ export function EtfArbPlay() {
   if (finished) {
     return (
       <>
-        <TopBar title="ETF Arbitrage" />
+        <TopBar title="ETF Arbitrage" onHelp={instructions.show} />
+        {instructions.open && <InstructionsModal mode="etfArb" onClose={instructions.close} />}
         <ResultsScreen
           title="Arb Session Complete"
           stats={[
@@ -118,7 +122,8 @@ export function EtfArbPlay() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <TopBar title="ETF Arbitrage" />
+      <TopBar title="ETF Arbitrage" onHelp={instructions.show} />
+      {instructions.open && <InstructionsModal mode="etfArb" onClose={instructions.close} />}
       <ScoreBar
         items={[
           { label: 'Round', value: `${roundIndex + 1}/${ROUNDS_PER_SESSION}`, tone: 'accent' },
