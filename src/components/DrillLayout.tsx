@@ -5,10 +5,14 @@ import { Timer, TimerBar } from './Timer'
 import { NumericKeypad } from './NumericKeypad'
 import { FeedbackFlash } from './FeedbackFlash'
 import { ResultsScreen } from './ResultsScreen'
+import { InstructionsModal } from './InstructionsModal'
+import { useInstructionsModal } from '../lib/useInstructionsModal'
 import type { TimedDrillState } from '../lib/useTimedDrill'
+import type { ModeId } from '../types'
 
 interface DrillLayoutProps {
   title: string
+  mode: ModeId
   drill: TimedDrillState
   allowDecimal?: boolean
   allowNegative?: boolean
@@ -19,6 +23,7 @@ interface DrillLayoutProps {
 
 export function DrillLayout({
   title,
+  mode,
   drill,
   allowDecimal = true,
   allowNegative = false,
@@ -26,11 +31,14 @@ export function DrillLayout({
   resultsExtra,
   submitLabel,
 }: DrillLayoutProps) {
+  const instructions = useInstructionsModal(mode)
+
   if (drill.finished) {
     const total = drill.correct + drill.wrong
     return (
       <>
-        <TopBar title={title} />
+        <TopBar title={title} onHelp={instructions.show} />
+        {instructions.open && <InstructionsModal mode={mode} onClose={instructions.close} />}
         <ResultsScreen
           stats={[
             { label: 'Score', value: String(drill.score), tone: drill.score >= 0 ? 'green' : 'red' },
@@ -47,7 +55,12 @@ export function DrillLayout({
 
   return (
     <div className="flex-1 flex flex-col">
-      <TopBar title={title} right={<Timer remainingMs={drill.remainingMs} totalMs={drill.totalMs} />} />
+      <TopBar
+        title={title}
+        onHelp={instructions.show}
+        right={<Timer remainingMs={drill.remainingMs} totalMs={drill.totalMs} />}
+      />
+      {instructions.open && <InstructionsModal mode={mode} onClose={instructions.close} />}
       <TimerBar remainingMs={drill.remainingMs} totalMs={drill.totalMs} />
       <ScoreBar
         items={[

@@ -18,6 +18,7 @@ export function ArithmeticPlay() {
   return (
     <DrillLayout
       title="Arithmetic Sprints"
+      mode="arithmetic"
       drill={drill}
       allowDecimal={settings.arithmetic.decimals || settings.arithmetic.fractions}
       allowNegative={false}

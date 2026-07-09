@@ -18,6 +18,7 @@ export function SequencePlay() {
   return (
     <DrillLayout
       title="Sequence & Pattern"
+      mode="sequence"
       drill={drill}
       allowDecimal
       allowNegative

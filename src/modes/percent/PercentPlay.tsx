@@ -18,6 +18,7 @@ export function PercentPlay() {
   return (
     <DrillLayout
       title="Percentage & Fraction"
+      mode="percent"
       drill={drill}
       allowDecimal
       allowNegative

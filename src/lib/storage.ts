@@ -138,3 +138,27 @@ export function clearHistory(): void {
 export function historyForMode(mode: ModeId): SessionRecord[] {
   return getHistory().filter((r) => r.mode === mode)
 }
+
+const SEEN_INSTRUCTIONS_KEY = 'qd_seen_instructions_v1'
+
+export function hasSeenInstructions(mode: ModeId): boolean {
+  try {
+    const raw = localStorage.getItem(SEEN_INSTRUCTIONS_KEY)
+    if (!raw) return false
+    const seen = JSON.parse(raw) as Partial<Record<ModeId, boolean>>
+    return !!seen[mode]
+  } catch {
+    return false
+  }
+}
+
+export function markInstructionsSeen(mode: ModeId): void {
+  try {
+    const raw = localStorage.getItem(SEEN_INSTRUCTIONS_KEY)
+    const seen = raw ? (JSON.parse(raw) as Partial<Record<ModeId, boolean>>) : {}
+    seen[mode] = true
+    localStorage.setItem(SEEN_INSTRUCTIONS_KEY, JSON.stringify(seen))
+  } catch {
+    // ignore
+  }
+}

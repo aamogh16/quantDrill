@@ -21,6 +21,7 @@ export function MultiplicationPlay() {
   return (
     <DrillLayout
       title="Mental Multiplication"
+      mode="multiplication"
       drill={drill}
       allowDecimal
       allowNegative={false}
