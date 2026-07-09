@@ -6,10 +6,12 @@ import { ResultsScreen } from '../../components/ResultsScreen'
 import { PlayingCard, HiddenCardStack } from '../../components/PlayingCard'
 import { NumericKeypad } from '../../components/NumericKeypad'
 import { useCountdown } from '../../lib/useCountdown'
-import { addSessionRecord, getSettings } from '../../lib/storage'
+import { useAdaptiveDifficulty } from '../../lib/difficulty'
+import { addSessionRecord, getSettings, setDifficultyLevel } from '../../lib/storage'
 import { uid, choice } from '../../lib/random'
 import {
   dealRound,
+  deriveEvParams,
   generateAiReference,
   generateTakingQuote,
   resolveMaking,
@@ -32,28 +34,38 @@ interface RoundOutcome {
 
 export function EvMarketPlay() {
   const settings = getSettings()
-  const { skew, secondsPerDecision, subMode: subModeSetting } = settings.evMarket
+  const { subMode: subModeSetting } = settings.evMarket
 
   const pickSubMode = useCallback(
     (): SubMode => (subModeSetting === 'mixed' ? choice<SubMode>(['taking', 'making']) : subModeSetting),
     [subModeSetting],
   )
 
+  const difficulty = useAdaptiveDifficulty({
+    initialLevel: settings.difficultyLevels.evMarket,
+    onLevelChange: (lvl) => setDifficultyLevel('evMarket', lvl),
+  })
+
   const [sessionKey, setSessionKey] = useState(0)
   const [roundIndex, setRoundIndex] = useState(0)
   const [subMode, setSubMode] = useState<SubMode>(pickSubMode)
-  const round: EvRound = useMemo(
-    () => dealRound(settings.evMarket),
+  const params = useMemo(
+    () => deriveEvParams(settings.evMarket, difficulty.level),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [roundIndex, sessionKey],
   )
+  const round: EvRound = useMemo(
+    () => dealRound(params),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [params],
+  )
   const takingQuote: Quote = useMemo(
-    () => generateTakingQuote(round.fairEV, skew),
+    () => generateTakingQuote(round.fairEV, params.skew),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [round],
   )
   const aiReference = useMemo(
-    () => generateAiReference(round.fairEV, skew),
+    () => generateAiReference(round.fairEV, params.skew),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [round],
   )
@@ -79,7 +91,7 @@ export function EvMarketPlay() {
       id: uid(),
       mode: 'evMarket',
       timestamp: Date.now(),
-      durationSec: ROUNDS_PER_SESSION * secondsPerDecision,
+      durationSec: ROUNDS_PER_SESSION * settings.evMarket.secondsPerDecision,
       totalQuestions: ROUNDS_PER_SESSION,
       correct: wins,
       wrong: ROUNDS_PER_SESSION - wins,
@@ -89,7 +101,7 @@ export function EvMarketPlay() {
       meta: { avgEdge: Math.round((totalEdge / ROUNDS_PER_SESSION) * 100) / 100 },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wins, totalPnl, totalEdge, secondsPerDecision])
+  }, [wins, totalPnl, totalEdge])
   const finalizeRef = useRef(finalize)
   finalizeRef.current = finalize
 
@@ -97,8 +109,11 @@ export function EvMarketPlay() {
     setTotalPnl((p) => p + outcome.pnl)
     setTotalEdge((e) => e + outcome.edge)
     if (outcome.win) setWins((w) => w + 1)
+    if (outcome.edge >= 0) difficulty.reportCorrect()
+    else difficulty.reportWrong()
     setLastOutcome({ label, detail, outcome })
     setStage('reveal')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const applyOutcomeRef = useRef(applyOutcome)
   applyOutcomeRef.current = applyOutcome
@@ -129,7 +144,7 @@ export function EvMarketPlay() {
     )
   }, [makingQuote, round, aiReference])
 
-  const countdown = useCountdown(secondsPerDecision, {
+  const countdown = useCountdown(params.secondsPerDecision, {
     autoStart: true,
     onExpire: () => {
       if (stage === 'reveal') return
@@ -144,19 +159,22 @@ export function EvMarketPlay() {
       return
     }
     const nextMode = pickSubMode()
+    const nextSeconds = deriveEvParams(settings.evMarket, difficulty.level).secondsPerDecision
     setRoundIndex((i) => i + 1)
     setSubMode(nextMode)
     setStage(nextMode === 'making' ? 'setCenter' : 'decision')
     setCenter('')
     setSpread(2)
     setLastOutcome(null)
-    countdown.reset(secondsPerDecision)
+    countdown.reset(nextSeconds)
     countdown.start()
   }
 
   const restart = () => {
     savedRef.current = false
     const nextMode = pickSubMode()
+    difficulty.reset(settings.difficultyLevels.evMarket)
+    const nextSeconds = deriveEvParams(settings.evMarket, settings.difficultyLevels.evMarket).secondsPerDecision
     setSessionKey((k) => k + 1)
     setRoundIndex(0)
     setSubMode(nextMode)
@@ -168,7 +186,7 @@ export function EvMarketPlay() {
     setWins(0)
     setFinished(false)
     setStage(nextMode === 'making' ? 'setCenter' : 'decision')
-    countdown.reset(secondsPerDecision)
+    countdown.reset(nextSeconds)
     countdown.start()
   }
 
@@ -194,15 +212,16 @@ export function EvMarketPlay() {
     <div className="flex-1 flex flex-col">
       <TopBar
         title={`EV Card Market · ${subMode === 'taking' ? 'Taking' : 'Making'}`}
-        right={<Timer remainingMs={countdown.remainingMs} totalMs={secondsPerDecision * 1000} />}
+        right={<Timer remainingMs={countdown.remainingMs} totalMs={params.secondsPerDecision * 1000} />}
       />
-      <TimerBar remainingMs={countdown.remainingMs} totalMs={secondsPerDecision * 1000} />
+      <TimerBar remainingMs={countdown.remainingMs} totalMs={params.secondsPerDecision * 1000} />
       <ScoreBar
         items={[
           { label: 'Round', value: `${roundIndex + 1}/${ROUNDS_PER_SESSION}`, tone: 'accent' },
           { label: 'P&L', value: totalPnl.toFixed(1), tone: totalPnl >= 0 ? 'green' : 'red' },
           { label: 'Edge', value: totalEdge.toFixed(1), tone: totalEdge >= 0 ? 'green' : 'red' },
           { label: 'Wins', value: wins, tone: 'green' },
+          { label: 'Level', value: difficulty.level, tone: 'accent' },
         ]}
       />
 

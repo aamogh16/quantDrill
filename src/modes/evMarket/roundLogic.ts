@@ -1,6 +1,27 @@
 import { buildDeck, cardValue, shuffleDeck, type Card } from '../../lib/deck'
 import type { EvMarketSettings } from '../../types'
 
+export interface EvRoundParams {
+  deckSize: number
+  hiddenCards: number
+  skew: number
+  secondsPerDecision: number
+}
+
+/**
+ * Scales the session's base settings by the adaptive level (1-10): higher
+ * level means a bigger deck/hand to sum, more hidden cards, a subtler
+ * (smaller) skew that's harder to read as an obvious edge, and less time.
+ */
+export function deriveEvParams(base: EvMarketSettings, level: number): EvRoundParams {
+  const centered = level - 5.5 // level 1 -> -4.5 (easiest), level 10 -> 4.5 (hardest)
+  const deckSize = Math.round(Math.min(52, Math.max(20, base.deckSize + centered * 3)) / 4) * 4
+  const hiddenCards = Math.min(6, Math.max(1, Math.round(base.hiddenCards + centered / 3)))
+  const skew = Math.min(base.skew * 1.6, Math.max(0.4, base.skew * (1.15 - level * 0.09)))
+  const secondsPerDecision = Math.min(45, Math.max(5, Math.round(base.secondsPerDecision - centered * 1.6)))
+  return { deckSize, hiddenCards, skew, secondsPerDecision }
+}
+
 export interface EvRound {
   visibleHand: Card[]
   hiddenCount: number
@@ -9,12 +30,12 @@ export interface EvRound {
   actualValue: number
 }
 
-export function dealRound(settings: EvMarketSettings): EvRound {
-  const deck = shuffleDeck(buildDeck(settings.deckSize))
+export function dealRound(params: EvRoundParams): EvRound {
+  const deck = shuffleDeck(buildDeck(params.deckSize))
   const handSize = Math.max(4, Math.min(10, Math.floor(deck.length * 0.35)))
   const visibleHand = deck.slice(0, handSize)
   const remaining = deck.slice(handSize)
-  const hiddenCount = Math.max(1, Math.min(settings.hiddenCards, remaining.length))
+  const hiddenCount = Math.max(1, Math.min(params.hiddenCards, remaining.length))
   const hiddenCards = remaining.slice(0, hiddenCount)
 
   const avgValue = remaining.reduce((s, c) => s + cardValue(c), 0) / remaining.length
