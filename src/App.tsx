@@ -1,6 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
 import { Home } from './screens/Home'
-import { ComingSoon } from './screens/ComingSoon'
 import { ArithmeticPlay } from './modes/arithmetic/ArithmeticPlay'
 import { OptiverPlay } from './modes/optiver80/OptiverPlay'
 import { PercentPlay } from './modes/percent/PercentPlay'
@@ -10,6 +9,7 @@ import { SequencePlay } from './modes/sequence/SequencePlay'
 import { EvMarketPlay } from './modes/evMarket/EvMarketPlay'
 import { Stats } from './screens/Stats'
 import { Settings } from './screens/Settings'
+import { EtfArbPlay } from './modes/etfArb/EtfArbPlay'
 
 function App() {
   return (
@@ -24,7 +24,7 @@ function App() {
       <Route path="/play/fermi" element={<FermiPlay />} />
       <Route path="/play/sequence" element={<SequencePlay />} />
       <Route path="/play/ev-market" element={<EvMarketPlay />} />
-      <Route path="/play/etf-arb" element={<ComingSoon title="ETF Arbitrage" />} />
+      <Route path="/play/etf-arb" element={<EtfArbPlay />} />
     </Routes>
   )
 }
