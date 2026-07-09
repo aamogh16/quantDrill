@@ -8,13 +8,15 @@ import { MultiplicationPlay } from './modes/multiplication/MultiplicationPlay'
 import { FermiPlay } from './modes/fermi/FermiPlay'
 import { SequencePlay } from './modes/sequence/SequencePlay'
 import { EvMarketPlay } from './modes/evMarket/EvMarketPlay'
+import { Stats } from './screens/Stats'
+import { Settings } from './screens/Settings'
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/stats" element={<ComingSoon title="Stats" />} />
-      <Route path="/settings" element={<ComingSoon title="Settings" />} />
+      <Route path="/stats" element={<Stats />} />
+      <Route path="/settings" element={<Settings />} />
       <Route path="/play/arithmetic" element={<ArithmeticPlay />} />
       <Route path="/play/optiver80" element={<OptiverPlay />} />
       <Route path="/play/percent" element={<PercentPlay />} />
