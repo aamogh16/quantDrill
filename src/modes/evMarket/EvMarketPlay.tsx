@@ -5,8 +5,10 @@ import { Timer, TimerBar } from '../../components/Timer'
 import { ResultsScreen } from '../../components/ResultsScreen'
 import { PlayingCard, HiddenCardStack } from '../../components/PlayingCard'
 import { NumericKeypad } from '../../components/NumericKeypad'
+import { InstructionsModal } from '../../components/InstructionsModal'
 import { useCountdown } from '../../lib/useCountdown'
 import { useAdaptiveDifficulty } from '../../lib/difficulty'
+import { useInstructionsModal } from '../../lib/useInstructionsModal'
 import { addSessionRecord, getSettings, setDifficultyLevel } from '../../lib/storage'
 import { uid, choice } from '../../lib/random'
 import {
@@ -21,7 +23,7 @@ import {
   type TakeAction,
 } from './roundLogic'
 
-const ROUNDS_PER_SESSION = 10
+const ROUNDS_PER_SESSION = 5
 
 type SubMode = 'taking' | 'making'
 type Stage = 'decision' | 'setCenter' | 'setSpread' | 'reveal'
@@ -32,7 +34,19 @@ interface RoundOutcome {
   win: boolean
 }
 
+interface RoundSummary {
+  round: number
+  subMode: SubMode
+  fairEV: number
+  actualValue: number
+  label: string
+  detail: string
+  pnl: number
+  edge: number
+}
+
 export function EvMarketPlay() {
+  const instructions = useInstructionsModal('evMarket')
   const settings = getSettings()
   const { subMode: subModeSetting } = settings.evMarket
 
@@ -80,6 +94,7 @@ export function EvMarketPlay() {
   const [totalPnl, setTotalPnl] = useState(0)
   const [totalEdge, setTotalEdge] = useState(0)
   const [wins, setWins] = useState(0)
+  const [history, setHistory] = useState<RoundSummary[]>([])
   const [finished, setFinished] = useState(false)
   const savedRef = useRef(false)
 
@@ -105,16 +120,31 @@ export function EvMarketPlay() {
   const finalizeRef = useRef(finalize)
   finalizeRef.current = finalize
 
-  const applyOutcome = useCallback((label: string, detail: string, outcome: RoundOutcome) => {
-    setTotalPnl((p) => p + outcome.pnl)
-    setTotalEdge((e) => e + outcome.edge)
-    if (outcome.win) setWins((w) => w + 1)
-    if (outcome.edge >= 0) difficulty.reportCorrect()
-    else difficulty.reportWrong()
-    setLastOutcome({ label, detail, outcome })
-    setStage('reveal')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const applyOutcome = useCallback(
+    (label: string, detail: string, outcome: RoundOutcome) => {
+      setTotalPnl((p) => p + outcome.pnl)
+      setTotalEdge((e) => e + outcome.edge)
+      if (outcome.win) setWins((w) => w + 1)
+      if (outcome.edge >= 0) difficulty.reportCorrect()
+      else difficulty.reportWrong()
+      setHistory((h) => [
+        ...h,
+        {
+          round: roundIndex + 1,
+          subMode,
+          fairEV: round.fairEV,
+          actualValue: round.actualValue,
+          label,
+          detail,
+          pnl: outcome.pnl,
+          edge: outcome.edge,
+        },
+      ])
+      setLastOutcome({ label, detail, outcome })
+      setStage('reveal')
+    },
+    [roundIndex, subMode, round, difficulty],
+  )
   const applyOutcomeRef = useRef(applyOutcome)
   applyOutcomeRef.current = applyOutcome
 
@@ -184,6 +214,7 @@ export function EvMarketPlay() {
     setTotalPnl(0)
     setTotalEdge(0)
     setWins(0)
+    setHistory([])
     setFinished(false)
     setStage(nextMode === 'making' ? 'setCenter' : 'decision')
     countdown.reset(nextSeconds)
@@ -193,7 +224,8 @@ export function EvMarketPlay() {
   if (finished) {
     return (
       <>
-        <TopBar title="EV Card Market" />
+        <TopBar title="EV Card Market" onHelp={instructions.show} />
+        {instructions.open && <InstructionsModal mode="evMarket" onClose={instructions.close} />}
         <ResultsScreen
           title="Trading Session Complete"
           stats={[
@@ -203,6 +235,32 @@ export function EvMarketPlay() {
             { label: 'Rounds', value: String(ROUNDS_PER_SESSION) },
           ]}
           onPlayAgain={restart}
+          extra={
+            <div className="w-full max-w-sm flex flex-col gap-2">
+              <span className="text-[10px] uppercase tracking-wide text-term-dim self-start">Round by round</span>
+              {history.map((h, i) => (
+                <div
+                  key={i}
+                  className={`rounded-lg border px-3 py-2 text-xs ${
+                    h.pnl >= 0 ? 'border-term-green/30 bg-term-green-dim/40' : 'border-term-red/30 bg-term-red-dim/40'
+                  }`}
+                >
+                  <div className="flex justify-between font-nums font-semibold">
+                    <span className="text-term-text">
+                      Round {h.round} · {h.subMode}
+                    </span>
+                    <span className={h.pnl >= 0 ? 'text-term-green' : 'text-term-red'}>
+                      {h.pnl >= 0 ? '+' : ''}
+                      {h.pnl.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="text-term-dim mt-0.5 font-nums">
+                    Fair EV {h.fairEV} · Actual {h.actualValue} — {h.label} ({h.detail})
+                  </div>
+                </div>
+              ))}
+            </div>
+          }
         />
       </>
     )
@@ -212,8 +270,10 @@ export function EvMarketPlay() {
     <div className="flex-1 flex flex-col">
       <TopBar
         title={`EV Card Market · ${subMode === 'taking' ? 'Taking' : 'Making'}`}
+        onHelp={instructions.show}
         right={<Timer remainingMs={countdown.remainingMs} totalMs={params.secondsPerDecision * 1000} />}
       />
+      {instructions.open && <InstructionsModal mode="evMarket" onClose={instructions.close} />}
       <TimerBar remainingMs={countdown.remainingMs} totalMs={params.secondsPerDecision * 1000} />
       <ScoreBar
         items={[
