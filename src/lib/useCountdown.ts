@@ -17,6 +17,7 @@ export function useCountdown(totalSeconds: number, opts: CountdownOptions = {}):
   const { onExpire, autoStart = false } = opts
   const [remainingMs, setRemainingMs] = useState(totalSeconds * 1000)
   const [running, setRunning] = useState(autoStart)
+  const [runToken, setRunToken] = useState(0)
   const endAtRef = useRef<number>(0)
   const rafRef = useRef<number | null>(null)
   const onExpireRef = useRef(onExpire)
@@ -40,10 +41,16 @@ export function useCountdown(totalSeconds: number, opts: CountdownOptions = {}):
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
+    // runToken forces this to re-sync endAtRef even when `running` nets to the
+    // same boolean across a reset()+start() pair called in one batch (e.g.
+    // advancing to the next question before the previous timer expired).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running])
+  }, [running, runToken])
 
-  const start = useCallback(() => setRunning(true), [])
+  const start = useCallback(() => {
+    setRunning(true)
+    setRunToken((t) => t + 1)
+  }, [])
   const pause = useCallback(() => setRunning(false), [])
   const reset = useCallback(
     (seconds?: number) => {
