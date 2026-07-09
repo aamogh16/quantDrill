@@ -5,6 +5,7 @@ import { ArithmeticPlay } from './modes/arithmetic/ArithmeticPlay'
 import { OptiverPlay } from './modes/optiver80/OptiverPlay'
 import { PercentPlay } from './modes/percent/PercentPlay'
 import { MultiplicationPlay } from './modes/multiplication/MultiplicationPlay'
+import { FermiPlay } from './modes/fermi/FermiPlay'
 
 function App() {
   return (
@@ -16,7 +17,7 @@ function App() {
       <Route path="/play/optiver80" element={<OptiverPlay />} />
       <Route path="/play/percent" element={<PercentPlay />} />
       <Route path="/play/multiplication" element={<MultiplicationPlay />} />
-      <Route path="/play/fermi" element={<ComingSoon title="Fermi Estimation" />} />
+      <Route path="/play/fermi" element={<FermiPlay />} />
       <Route path="/play/sequence" element={<ComingSoon title="Sequence & Pattern" />} />
       <Route path="/play/ev-market" element={<ComingSoon title="EV Card Market" />} />
       <Route path="/play/etf-arb" element={<ComingSoon title="ETF Arbitrage" />} />
