@@ -1,6 +1,8 @@
 import { Route, Routes } from 'react-router-dom'
 import { Home } from './screens/Home'
 import { ComingSoon } from './screens/ComingSoon'
+import { ArithmeticPlay } from './modes/arithmetic/ArithmeticPlay'
+import { OptiverPlay } from './modes/optiver80/OptiverPlay'
 
 function App() {
   return (
@@ -8,8 +10,8 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/stats" element={<ComingSoon title="Stats" />} />
       <Route path="/settings" element={<ComingSoon title="Settings" />} />
-      <Route path="/play/arithmetic" element={<ComingSoon title="Arithmetic Sprints" />} />
-      <Route path="/play/optiver80" element={<ComingSoon title="80 in 8" />} />
+      <Route path="/play/arithmetic" element={<ArithmeticPlay />} />
+      <Route path="/play/optiver80" element={<OptiverPlay />} />
       <Route path="/play/percent" element={<ComingSoon title="Percentage & Fraction" />} />
       <Route path="/play/multiplication" element={<ComingSoon title="Mental Multiplication" />} />
       <Route path="/play/fermi" element={<ComingSoon title="Fermi Estimation" />} />
