@@ -60,6 +60,7 @@ export const INSTRUCTIONS: Record<ModeId, InstructionContent> = {
     bullets: [
       'A "visible hand" of cards is dealt face-up — those are known and out of the deck.',
       'A "market pile" of face-down cards is hidden. Use the visible hand to work out the average value of what remains, then multiply by the number of hidden cards to get the fair EV.',
+      'Card values: number cards are face value, jack/queen/king are worth 10, and the ace is high — worth 14.',
       'Taking: you\'re shown a bid/ask quote — BUY if the ask is cheap vs. fair value, SELL if the bid is rich, PASS if neither.',
       "Making: you set your own bid/ask around your fair-value estimate. A tight spread trades more often for less edge per trade; a wide spread trades rarely but is safer.",
       'Each round reveals the hidden cards and settles your P&L against the decision you made.',

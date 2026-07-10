@@ -1,15 +1,15 @@
 export type Suit = '♠' | '♥' | '♦' | '♣'
 
 export interface Card {
-  rank: number // 1-13, ace=1 (can count as 1 or 11), jack/queen/king = 11/12/13
+  rank: number // 1-13, ace=1 (counts as the high card, value 14), jack/queen/king = 11/12/13
   suit: Suit
 }
 
 const SUITS: Suit[] = ['♠', '♥', '♦', '♣']
 
-export function cardValue(card: Card, aceHigh = false): number {
+export function cardValue(card: Card): number {
+  if (card.rank === 1) return 14 // ace is high
   if (card.rank >= 11) return 10
-  if (card.rank === 1) return aceHigh ? 11 : 1
   return card.rank
 }
 
