@@ -91,9 +91,13 @@ export function generateArithmetic(settings: ArithmeticSettings, level: number):
         answer = Math.round((a / b) * 100) / 100
         tolerance = 0.05
       } else {
-        const multiple = randInt(1, Math.max(1, Math.floor(range.max / b)))
-        a = multiple * b
-        answer = multiple
+        // Draw the quotient from the digit range and derive the dividend as
+        // divisor × quotient. Constraining the dividend instead forces a === b
+        // (self-division, answer 1) whenever the divisor is large relative to
+        // the range — e.g. at 1 digit, b >= 5 could only ever give b ÷ b = 1.
+        const quotient = randInt(Math.max(range.min, 2), Math.max(2, range.max))
+        a = quotient * b
+        answer = quotient
       }
       symbol = '÷'
       break
