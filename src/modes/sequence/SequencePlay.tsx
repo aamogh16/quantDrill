@@ -13,6 +13,7 @@ export function SequencePlay() {
     roundSeconds: settings.sequence.roundSeconds,
     initialLevel: settings.difficultyLevels.sequence,
     generate,
+    timed: settings.timedSessions,
   })
 
   return (

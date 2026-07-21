@@ -13,6 +13,7 @@ export function ArithmeticPlay() {
     roundSeconds: settings.arithmetic.roundSeconds,
     initialLevel: settings.difficultyLevels.arithmetic,
     generate,
+    timed: settings.timedSessions,
   })
 
   return (

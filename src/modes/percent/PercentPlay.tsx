@@ -13,6 +13,7 @@ export function PercentPlay() {
     roundSeconds: settings.percent.roundSeconds,
     initialLevel: settings.difficultyLevels.percent,
     generate,
+    timed: settings.timedSessions,
   })
 
   return (

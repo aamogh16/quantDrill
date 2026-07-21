@@ -82,6 +82,8 @@ export interface EtfArbSettings {
 }
 
 export interface Settings {
+  /** When false, standard drills run with no countdown — play until you end the session manually. */
+  timedSessions: boolean
   enabledModes: Record<ModeId, boolean>
   arithmetic: ArithmeticSettings
   percent: PercentSettings

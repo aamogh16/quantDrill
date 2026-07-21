@@ -16,6 +16,7 @@ export function MultiplicationPlay() {
     roundSeconds: settings.multiplication.roundSeconds,
     initialLevel: settings.difficultyLevels.multiplication,
     generate,
+    timed: settings.timedSessions,
   })
 
   return (

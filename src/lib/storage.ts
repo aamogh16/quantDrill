@@ -5,6 +5,7 @@ const HISTORY_KEY = 'qd_history_v1'
 const MAX_HISTORY = 1000
 
 export const DEFAULT_SETTINGS: Settings = {
+  timedSessions: true,
   enabledModes: {
     arithmetic: true,
     optiver80: true,

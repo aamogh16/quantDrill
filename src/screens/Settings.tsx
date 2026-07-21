@@ -37,6 +37,19 @@ export function Settings() {
     <>
       <TopBar title="Settings" />
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4 pb-10">
+        <Section title="Session">
+          <Row label="Timed sessions">
+            <Toggle
+              checked={settings.timedSessions}
+              onChange={(v) => patch({ timedSessions: v })}
+            />
+          </Row>
+          <div className="py-2 text-xs text-term-dim">
+            When off, arithmetic, percentage, multiplication, and sequence drills run with no
+            countdown — play as long as you like and tap “End” to finish.
+          </div>
+        </Section>
+
         <Section title="Active Modes">
           {MODES.map((mode) => (
             <Row key={mode.id} label={mode.name}>

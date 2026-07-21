@@ -19,6 +19,8 @@ interface UseTimedDrillOptions {
   generate: (level: number) => DrillQuestion
   correctPoints?: number
   wrongPoints?: number
+  /** When false, no countdown runs — the session ends only via endSession(). */
+  timed?: boolean
 }
 
 export type Feedback = { status: 'correct' | 'wrong'; detail?: string; key: number } | null
@@ -30,6 +32,7 @@ export function useTimedDrill({
   generate,
   correctPoints = 1,
   wrongPoints = -1,
+  timed = true,
 }: UseTimedDrillOptions) {
   const generateRef = useRef(generate)
   generateRef.current = generate
@@ -50,6 +53,7 @@ export function useTimedDrill({
   const [feedback, setFeedback] = useState<Feedback>(null)
   const [finished, setFinished] = useState(false)
   const questionStartRef = useRef(performance.now())
+  const sessionStartRef = useRef(performance.now())
   const timeSpentRef = useRef<number[]>([])
   const feedbackKeyRef = useRef(0)
 
@@ -60,11 +64,15 @@ export function useTimedDrill({
       timeSpentRef.current.length > 0
         ? Math.round(timeSpentRef.current.reduce((a, b) => a + b, 0) / timeSpentRef.current.length)
         : undefined
+    // Untimed sessions have no fixed length, so record the actual elapsed time.
+    const durationSec = timed
+      ? roundSeconds
+      : Math.max(1, Math.round((performance.now() - sessionStartRef.current) / 1000))
     const record: SessionRecord = {
       id: uid(),
       mode,
       timestamp: Date.now(),
-      durationSec: roundSeconds,
+      durationSec,
       totalQuestions: total,
       correct,
       wrong,
@@ -74,15 +82,17 @@ export function useTimedDrill({
     }
     addSessionRecord(record)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [correct, wrong, score, mode, roundSeconds])
+  }, [correct, wrong, score, mode, roundSeconds, timed])
 
   const finalizeRef = useRef(finalize)
   finalizeRef.current = finalize
 
   const countdown = useCountdown(roundSeconds, {
-    autoStart: true,
+    autoStart: timed,
     onExpire: () => finalizeRef.current(),
   })
+
+  const endSession = useCallback(() => finalizeRef.current(), [])
 
   const nextQuestion = useCallback(() => {
     setQuestion(generateRef.current(levelRef.current))
@@ -141,12 +151,13 @@ export function useTimedDrill({
     setFinished(false)
     setFeedback(null)
     timeSpentRef.current = []
+    sessionStartRef.current = performance.now()
     difficulty.reset(initialLevel)
     countdown.reset(roundSeconds)
-    countdown.start()
+    if (timed) countdown.start()
     nextQuestion()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialLevel, roundSeconds])
+  }, [initialLevel, roundSeconds, timed])
 
   return {
     question,
@@ -162,6 +173,8 @@ export function useTimedDrill({
     finished,
     remainingMs: countdown.remainingMs,
     totalMs: roundSeconds * 1000,
+    timed,
+    endSession,
     level: difficulty.level,
     streak: difficulty.streak,
     restart,

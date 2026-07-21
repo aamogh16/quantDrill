@@ -58,10 +58,21 @@ export function DrillLayout({
       <TopBar
         title={title}
         onHelp={instructions.show}
-        right={<Timer remainingMs={drill.remainingMs} totalMs={drill.totalMs} />}
+        right={
+          drill.timed ? (
+            <Timer remainingMs={drill.remainingMs} totalMs={drill.totalMs} />
+          ) : (
+            <button
+              onClick={drill.endSession}
+              className="px-2.5 py-1 rounded-md text-xs font-medium bg-term-panel-2 text-term-dim border border-term-border active:text-term-text active:border-term-text"
+            >
+              End
+            </button>
+          )
+        }
       />
       {instructions.open && <InstructionsModal mode={mode} onClose={instructions.close} />}
-      <TimerBar remainingMs={drill.remainingMs} totalMs={drill.totalMs} />
+      {drill.timed && <TimerBar remainingMs={drill.remainingMs} totalMs={drill.totalMs} />}
       <ScoreBar
         items={[
           { label: 'Score', value: drill.score, tone: drill.score >= 0 ? 'green' : 'red' },
